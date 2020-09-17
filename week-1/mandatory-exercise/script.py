@@ -1,10 +1,13 @@
 # run from cmd as e.g. "python script.py < Test07.in"
 
 import sys
+import time
 
 n = int(sys.stdin.readline())
 s = list(map(int, sys.stdin.readline().split()))
 b = list(map(int, sys.stdin.readline().split()))
+
+print(n, len(s), len(b))
 
 # First attempt - achieves 10 points, not divide and conquer
 # for i in range(n):
@@ -37,5 +40,8 @@ def divide_and_conquer(s, b):
                     maximum = temp
         return maximum, min_s, max_b
 
+start_time = time.time()
 result = divide_and_conquer(s, b)
+print("--- %s seconds ---" % (time.time() - start_time))
+
 print(result[0])
