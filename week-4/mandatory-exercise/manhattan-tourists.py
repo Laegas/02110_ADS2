@@ -1,4 +1,4 @@
-# run from cmd as "python script.py < Test01.in"
+# run from cmd as "python manhattan-tourists.py < Test00.in"
 
 import sys
 
