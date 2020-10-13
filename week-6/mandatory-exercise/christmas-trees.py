@@ -1,161 +1,209 @@
 # run from terminal as "python christmas-trees.py < test00.in"
 
 import sys
-
-def pretty_print(M):
-    for i in range(len(M)):
-        for j in range(len(M[0])):
-            print(str(M[i][j] if M[i][j] != None else "N").ljust(3, " "),end="")
-        print()
-
-n, m = [int(s) for s in sys.stdin.readline().replace("\n", "").split(' ')]
-print(n, m)
-
-total_nodes = n * m + n + m + 2
-am = [[None for _ in range(total_nodes)] for _ in range(total_nodes)]
-
-# diagonal
-for i in range(total_nodes):
-    am[i][i] = 0
-
-# first row and column
-for i in range(total_nodes):
-    if i > 0 and i < (n*m+1):
-        am[0][i] = 1
-        am[i][0] = 1
-    else:
-        am[0][i] = 0
-        am[i][0] = 0
-
-# last row and column
-for i in range(total_nodes):
-    if i > (n*m) and i < total_nodes-1:
-        am[total_nodes-1][i] = 1
-        am[i][total_nodes-1] = 1
-    else:
-        am[total_nodes - 1][i] = 0
-        am[i][total_nodes - 1] = 0
-
-#
-for i in range(1, (n*m+1)):
-    for j in range(1, (n*m+1)):
-        am[i][j] = 0
-        am[total_nodes-i-1][total_nodes-j-1] = 0
-
-pretty_print(am)
-
-# for _ in range(n):
-#     line = [int(s) for s in sys.stdin.readline().replace("\n", "").split(' ')]
-#     print(line)
-
-
-
-# example
-# T E
-# E T
-
-expected = [
-    #S N1 N2 N3 N4 R1 R2 C1 C2  T
-    [0, 1, 1, 1, 1, 0, 0, 0, 0, 0],
-    [1, 0, 0, 0, 0, 1, 0, 1, 0, 0],
-    [1, 0, 0, 0, 0, 1, 0, 0, 1, 0],
-    [1, 0, 0, 0, 0, 0, 1, 1, 0, 0],
-    [1, 0, 0, 0, 0, 0, 1, 0, 1, 0],
-    [0, 1, 1, 0, 0, 0, 0, 0, 0, 1],
-    [0, 0, 0, 1, 1, 0, 0, 0, 0, 1],
-    [0, 1, 0, 1, 0, 0, 0, 0, 0, 1],
-    [0, 0, 1, 0, 1, 0, 0, 0, 0, 1],
-    [0, 0, 0, 0, 0, 1, 1, 1, 1, 0]
-]
-
-#   0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15
-# 0 0 1 1 1 1 1 1 1 1 0 0  0  0  0  0  0
-# 1 1 0 0 0 0 0 0 0 0 1 0  1  0  0  0  0
-# 2 1
-# 3 1
-# 4 1
-# 5 1
-# 6 1
-# 7 1
-# 8 1
-# 9 0
-#10 0
-#11 0
-#12 0
-#13 0
-#14 0
-#15 0
-
-# from wiki
 import collections
 
-# This class represents a directed graph using adjacency matrix representation
-class Graph:
-    def __init__(self, graph):
-        self.graph = graph  # residual graph
-        self.ROW = len(graph)
+# read the input file
+n, m = [int(s) for s in sys.stdin.readline().replace("\n", "").split(' ')]
+empty_squares = 0
+trees_matrix = [[None for _ in range(m)] for _ in range(n)]
 
-    def bfs(self, s, t, parent):
-        """Returns true if there is a path from source 's' to sink 't' in
-        residual graph. Also fills parent[] to store the path """
+for i in range(n):
+    line = [int(s) for s in sys.stdin.readline().replace("\n", "").split(' ')]
+    empty_squares += m - line[0]
+    for j in range(1, len(line)):
+        trees_matrix[i][line[j]] = 1
 
-        # Mark all the vertices as not visited
-        visited = [False] * (self.ROW)
+# def pretty_print(M):
+#     for i in range(len(M)):
+#         for j in range(len(M[0])):
+#             print(str(M[i][j] if M[i][j] != None else "N").ljust(3, " "),end="")
+#         print()
 
-        # Create a queue for BFS
-        queue = collections.deque()
+# class FlowEdge:
+#     def __init__(self, value, cap):
+#         self.vertex = value
+#         self.next = None
+#         self.cap = cap
+#         self.flow = 0
+#
+#     def __str__(self):
+#         return "Vertex " + str(self.vertex) + ", cap: " + str(self.cap)
+#
+# class Graph:
+#     def __init__(self, num):
+#         self.V = num
+#         self.graph = [None] * self.V
+#         self.edgeTo = []
+#
+#     def add_edge(self, v_from, v_to, cap):
+#         edge = FlowEdge(v_to, cap)
+#         edge.next = self.graph[v_from]
+#         self.graph[v_from] = edge
+#
+#     # Print the graph
+#     def print_graph(self):
+#         for i in range(self.V):
+#             print("Vertex " + str(i) + ":", end="")
+#             temp = self.graph[i]
+#             while temp:
+#                 print(" -> ({}, {})".format(temp.vertex, temp.cap), end="")
+#                 temp = temp.next
+#             print()
+#
+#     def has_augmenting_path(self):
+#         # start with source s which is 0
+#         visited, queue = set(), collections.deque([0])
+#         visited.add(0)
+#         self.edgeTo = [None] * self.V
+#
+#         while queue:
+#             vertex = queue.popleft()
+#             temp = self.graph[vertex]
+#             while temp:
+#                 if temp.vertex not in visited and temp.cap - temp.flow > 0:
+#                     visited.add(temp.vertex)
+#                     queue.append(temp.vertex)
+#                     self.edgeTo[temp.vertex] = temp
+#                 temp = temp.next
+#
+#         for e in self.edgeTo:
+#             print(e)
+#         return total_nodes - 1 in visited
+#
+#     def ford_fulkerson(self):
+#         total_flow = 0
+#         while self.has_augmenting_path():
+#             bottleneck = 1000
 
-        # Mark the source node as visited and enqueue it
-        queue.append(s)
-        visited[s] = True
+class FlowEdge:
+    def __init__(self, v, w, capacity):
+        self.from_node = v
+        self.to_node = w
+        self.capacity = capacity
+        self.flow = 0
 
-        # Standard BFS loop
+    def other(self, vertex):
+        if vertex == self.from_node:
+            return self.to_node
+        elif vertex == self.to_node:
+            return self.from_node
+        else:
+            raise Exception("Error")
+
+    def residual_capacity_to(self, vertex):
+        if vertex == self.from_node:
+            return self.flow
+        elif vertex == self.to_node:
+            return self.capacity - self.flow
+        else:
+            raise Exception("Error")
+
+    def add_residual_flow_to(self, vertex, flow_to_add):
+        if vertex == self.from_node:
+            self.flow -= flow_to_add
+        elif vertex == self.to_node:
+            self.flow += flow_to_add
+        else:
+            raise Exception("Error")
+
+    def __str__(self):
+        return "From " + str(self.from_node) + " to " + str(self.to_node) + "; cap: " + str(self.capacity) + "; flow: " + str(self.flow)
+
+
+class FlowGraph:
+    def __init__(self, V):
+        self.V = V
+        self.adj = [[] for _ in range(V)]
+        self.edgeTo = None
+
+    def add_edge(self, e: FlowEdge):
+        self.adj[e.from_node].append(e)
+        self.adj[e.to_node].append(e)
+
+    def has_augmenting_path(self):
+        self.edgeTo = [None for _ in range(self.V)]
+        visited = set()
+        queue = collections.deque([0])  # source s = 0
+        visited.add(0)
+
         while queue:
-            u = queue.popleft()
+            v = queue.popleft()
+            for e in self.adj[v]:
+                w = e.other(v)
+                if w not in visited and e.residual_capacity_to(w) > 0:
+                    self.edgeTo[w] = e
+                    visited.add(w)
+                    queue.append(w)
 
-            # Get all adjacent vertices's of the dequeued vertex u
-            # If an adjacent has not been visited, then mark it
-            # visited and enqueue it
-            for ind, val in enumerate(self.graph[u]):
-                if (visited[ind] == False) and (val > 0):
-                    queue.append(ind)
-                    visited[ind] = True
-                    parent[ind] = u
+        return self.V - 1 in visited
 
-        # If we reached sink in BFS starting from source, then return
-        # true, else false
-        return visited[t]
+    def ford_fulkerson(self):
+        while self.has_augmenting_path():  # calculates edgeTo
+            # initialize some big bottleneck
+            bottleneck = 1000
 
-    # Returns the maximum flow from s to t in the given graph
-    def edmonds_karp(self, source, sink):
+            # calculate the actual bottleneck
+            current = self.V - 1  # start from sink t
+            while current != 0:  # until source s
+                bottleneck = min(bottleneck, self.edgeTo[current].residual_capacity_to(current))
+                current = self.edgeTo[current].other(current)
 
-        # This array is filled by BFS and to store path
-        parent = [-1] * (self.ROW)
+            # augment the path with the bottleneck
+            current = self.V - 1  # start from sink t
+            while current != 0:  # until source s
+                self.edgeTo[current].add_residual_flow_to(current, bottleneck)
+                current = self.edgeTo[current].other(current)
 
-        max_flow = 0  # There is no flow initially
+    def get_number_of_tables(self):
+        tables = 0
 
-        # Augment the flow while there is path from source to sink
-        while self.bfs(source, sink, parent):
+        for i in range(1, empty_squares + 1):
+            for j in range(len(self.adj[i])):
+                first_edge = self.adj[i][j]
+                print(first_edge)
 
-            # Find minimum residual capacity of the edges along the
-            # path filled by BFS. Or we can say find the maximum flow
-            # through the path found.
-            path_flow = float("Inf")
-            s = sink
-            while s != source:
-                path_flow = min(path_flow, self.graph[parent[s]][s])
-                s = parent[s]
+        # for i in range(1, empty_squares + 1):
+        #     for j in range(len(self.adj[i])):
+        #         first_edge = self.adj[i][j]
+        #         if first_edge.from_node == i:
+        #             second_edge = self.adj[i][j+1]
+        #             if first_edge.capacity == first_edge.flow and second_edge.capacity == second_edge.flow:
+        #                 tables += 1
+        #             break
 
-            # Add path flow to overall flow
-            max_flow += path_flow
+        return tables
 
-            # update residual capacities of the edges and reverse edges
-            # along the path
-            v = sink
-            while v != source:
-                u = parent[v]
-                self.graph[u][v] -= path_flow
-                self.graph[v][u] += path_flow
-                v = parent[v]
 
-        return max_flow
+# Create graph and edges
+total_nodes = empty_squares + n + m + 2
+graph = FlowGraph(total_nodes)
+# add edges from source to the empty squares
+for i in range(1, empty_squares + 1):
+    # 0 is source s
+    graph.add_edge(FlowEdge(0, i, 2))
+
+# add edges from empty squares to row and column edges
+empty_squares_counter = 1
+for i in range(len(trees_matrix)):
+    for j in range(len(trees_matrix[0])):
+        if trees_matrix[i][j] is None:
+            # row
+            graph.add_edge(FlowEdge(empty_squares_counter, empty_squares + i + 1, 1))
+            # column
+            graph.add_edge(FlowEdge(empty_squares_counter, empty_squares + n + j + 1, 1))
+            empty_squares_counter += 1
+
+# add edges from row edges to sink
+for i in range(empty_squares + 1, empty_squares + 1 + n):
+    # total_nodes - 1 is sink t
+    graph.add_edge(FlowEdge(i, total_nodes - 1, 2))
+
+# add edges from column edges to sink
+for i in range(empty_squares + 1 + n, total_nodes - 1):
+    # total_nodes - 1 is sink t
+    graph.add_edge(FlowEdge(i, total_nodes - 1, 1))
+
+graph.ford_fulkerson()
+
+print(graph.get_number_of_tables())
