@@ -1,4 +1,4 @@
-# run from terminal as "python christmas-trees.py < test00.in"
+# run from terminal as "python christmas-trees.py < testfile.in"
 
 import sys
 import collections
@@ -13,12 +13,6 @@ for i in range(n):
     empty_squares += m - line[0]
     for j in range(1, len(line)):
         trees_matrix[i][line[j]] = 1
-
-# def pretty_print(M):
-#     for i in range(len(M)):
-#         for j in range(len(M[0])):
-#             print(str(M[i][j] if M[i][j] != None else "N").ljust(3, " "),end="")
-#         print()
 
 class FlowEdge:
     def __init__(self, v, w, capacity):
@@ -59,12 +53,14 @@ class FlowGraph:
         self.V = V
         self.adj = [[] for _ in range(V)]
         self.edgeTo = None
+        self.E = 0
 
     def add_edge(self, e: FlowEdge):
         self.adj[e.from_node].append(e)
         self.adj[e.to_node].append(e)
+        self.E += 1
 
-    def has_augmenting_path(self):
+    def has_augmenting_path_bfs(self):
         self.edgeTo = [None for _ in range(self.V)]
         visited = set()
         queue = collections.deque([0])  # source s = 0
@@ -76,14 +72,31 @@ class FlowGraph:
                 w = e.other(v)
                 if w not in visited and e.residual_capacity_to(w) > 0:
                     self.edgeTo[w] = e
+                    if w == self.V - 1:
+                        return True
                     visited.add(w)
                     queue.append(w)
+        return False
+
+    def has_augmenting_path_dfs(self, start=0, visited=None):
+        if visited is None:
+            self.edgeTo = [None for _ in range(self.V)]
+            visited = set()
+        visited.add(start)
+
+        for e in self.adj[start]:
+            if self.V - 1 in visited:
+                return True
+            w = e.other(start)
+            if w not in visited and e.residual_capacity_to(w) > 0:
+                self.edgeTo[w] = e
+                self.has_augmenting_path_dfs(w, visited)
 
         return self.V - 1 in visited
 
     def ford_fulkerson(self):
         total_flow = 0
-        while self.has_augmenting_path():  # calculates edgeTo
+        while self.has_augmenting_path_dfs():  # calculates edgeTo
             # initialize some big bottleneck
             bottleneck = 1000
 
@@ -105,34 +118,39 @@ class FlowGraph:
 # Create graph and edges
 total_nodes = empty_squares * 2 + 2 * n + m + 2
 graph = FlowGraph(total_nodes)
+debug_graph_building = False
 
 # add edges from source to the first layer of empty squares
 for i in range(1, empty_squares + 1):
     # 0 is source s
-    # print(0, i)
-    graph.add_edge(FlowEdge(0, i, 1))
+    from_to = [0, i]
+    if debug_graph_building: print(from_to)
+    graph.add_edge(FlowEdge(from_to[0], from_to[1], 1))
 
 # add edges from empty squares in the first layer to row
 empty_squares_counter = 1
 for i in range(len(trees_matrix)):
     for j in range(len(trees_matrix[0])):
         if trees_matrix[i][j] is None:
-            # print(empty_squares_counter, empty_squares + i + 1)
-            graph.add_edge(FlowEdge(empty_squares_counter, empty_squares + i + 1, 1))
+            from_to = [empty_squares_counter, empty_squares + i + 1]
+            if debug_graph_building: print(from_to)
+            graph.add_edge(FlowEdge(from_to[0], from_to[1], 1))
             empty_squares_counter += 1
 
 # make row nodes have capacity of two
 for i in range(empty_squares + 1, empty_squares + 1 + n):
-    # print(i, i + n)
-    graph.add_edge(FlowEdge(i, i + n, 2))
+    from_to = [i, i + n]
+    if debug_graph_building: print(from_to)
+    graph.add_edge(FlowEdge(from_to[0], from_to[1], 2))
 
 # add edges from row to the second layer of empty squares
 empty_squares_counter = empty_squares + 2 * n + 1
 for i in range(len(trees_matrix)):
     for j in range(len(trees_matrix[0])):
         if trees_matrix[i][j] is None:
-            # print(empty_squares + n + i + 1, empty_squares_counter)
-            graph.add_edge(FlowEdge(empty_squares + n + i + 1, empty_squares_counter, 1))
+            from_to = [empty_squares + n + i + 1, empty_squares_counter]
+            if debug_graph_building: print(from_to)
+            graph.add_edge(FlowEdge(from_to[0], from_to[1], 1))
             empty_squares_counter += 1
 
 # add edges from second layer of empty squares to column
@@ -140,14 +158,23 @@ empty_squares_counter = empty_squares + 2 * n + 1
 for i in range(len(trees_matrix)):
     for j in range(len(trees_matrix[0])):
         if trees_matrix[i][j] is None:
-            # print(empty_squares_counter, 2 * empty_squares + 2 * n + j + 1)
-            graph.add_edge(FlowEdge(empty_squares_counter, 2 * empty_squares + 2 * n + j + 1, 1))
+            from_to = [empty_squares_counter, 2 * empty_squares + 2 * n + j + 1]
+            if debug_graph_building: print(from_to)
+            graph.add_edge(FlowEdge(from_to[0], from_to[1], 1))
             empty_squares_counter += 1
 
 # add edges from column to sink t = total_nodes - 1
 for i in range(total_nodes - m - 1, total_nodes - 1):
-    # 0 is source s
-    # print(i, total_nodes - 1)
-    graph.add_edge(FlowEdge(i, total_nodes - 1, 1))
+    from_to = [i, total_nodes - 1]
+    if debug_graph_building: print(from_to)
+    graph.add_edge(FlowEdge(from_to[0], from_to[1], 1))
 
-print(graph.ford_fulkerson())
+run_cProfile = False
+
+if run_cProfile:
+    import cProfile
+    sys.stdout = open("Benchmarks.txt", "w+")
+    cProfile.run('graph.ford_fulkerson()')
+    sys.stdout.close()
+else:
+    print(graph.ford_fulkerson())
