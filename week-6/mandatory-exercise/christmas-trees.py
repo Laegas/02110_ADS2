@@ -4,16 +4,17 @@ import sys
 import collections
 
 # read the input file
-n, m = [int(s) for s in sys.stdin.readline().replace("\n", "").split(' ')]
+n, m = [int(s) for s in sys.stdin.readline().split()]
 empty_squares = 0
 trees_matrix = [[None for _ in range(m)] for _ in range(n)]
 
 for i in range(n):
-    line = [int(s) for s in sys.stdin.readline().replace("\n", "").split(' ')]
+    line = [int(s) for s in sys.stdin.readline().split()]
     empty_squares += m - line[0]
     for j in range(1, len(line)):
         trees_matrix[i][line[j]] = 1
 
+# define graph classes
 class FlowEdge:
     def __init__(self, v, w, capacity):
         self.from_node = v
