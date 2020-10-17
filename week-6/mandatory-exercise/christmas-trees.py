@@ -117,49 +117,42 @@ class FlowGraph:
         return total_flow
 
 # Create graph and edges
-total_nodes = empty_squares * 2 + 2 * n + m + 2
+total_nodes = empty_squares + 2 * n + m + 2
 graph = FlowGraph(total_nodes)
 debug_graph_building = False
 
-# add edges from source to the first layer of empty squares
-for i in range(1, empty_squares + 1):
-    # 0 is source s
-    from_to = [0, i]
-    if debug_graph_building: print(from_to)
-    graph.add_edge(FlowEdge(from_to[0], from_to[1], 1))
-
-# add edges from empty squares in the first layer to row
-empty_squares_counter = 1
+# add edges from source to the row nodes with appropriate capacity representing number of empty squares in that row
 for i in range(len(trees_matrix)):
+    temp_cap = 0
     for j in range(len(trees_matrix[0])):
         if trees_matrix[i][j] is None:
-            from_to = [empty_squares_counter, empty_squares + i + 1]
-            if debug_graph_building: print(from_to)
-            graph.add_edge(FlowEdge(from_to[0], from_to[1], 1))
-            empty_squares_counter += 1
+            temp_cap += 1
+    from_to = [0, i + 1]
+    if debug_graph_building: print(from_to, temp_cap)
+    graph.add_edge(FlowEdge(from_to[0], from_to[1], temp_cap))
 
 # make row nodes have capacity of two
-for i in range(empty_squares + 1, empty_squares + 1 + n):
+for i in range(1, 1 + n):
     from_to = [i, i + n]
     if debug_graph_building: print(from_to)
     graph.add_edge(FlowEdge(from_to[0], from_to[1], 2))
 
 # add edges from row to the second layer of empty squares
-empty_squares_counter = empty_squares + 2 * n + 1
+empty_squares_counter = 2 * n + 1
 for i in range(len(trees_matrix)):
     for j in range(len(trees_matrix[0])):
         if trees_matrix[i][j] is None:
-            from_to = [empty_squares + n + i + 1, empty_squares_counter]
+            from_to = [n + i + 1, empty_squares_counter]
             if debug_graph_building: print(from_to)
             graph.add_edge(FlowEdge(from_to[0], from_to[1], 1))
             empty_squares_counter += 1
 
 # add edges from second layer of empty squares to column
-empty_squares_counter = empty_squares + 2 * n + 1
+empty_squares_counter = 2 * n + 1
 for i in range(len(trees_matrix)):
     for j in range(len(trees_matrix[0])):
         if trees_matrix[i][j] is None:
-            from_to = [empty_squares_counter, 2 * empty_squares + 2 * n + j + 1]
+            from_to = [empty_squares_counter, empty_squares + 2 * n + j + 1]
             if debug_graph_building: print(from_to)
             graph.add_edge(FlowEdge(from_to[0], from_to[1], 1))
             empty_squares_counter += 1
